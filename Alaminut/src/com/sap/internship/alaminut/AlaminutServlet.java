@@ -179,9 +179,9 @@ public class AlaminutServlet extends HttpServlet {
 		IXSSEncoder xssEncoder = XSSEncoder.getInstance();
 		for (Recipe r : resultList) {
 			response.getWriter().println(
-					"<tr><td>" + xssEncoder.encodeHTML(r.getName())
+					"<tr><td>" + r.getName()
 							+ "</td><td>"
-							+ xssEncoder.encodeHTML(r.getHowToMake())
+							+ r.getHowToMake()
 							+ "</td><td>" + r.getId() + "</td>");
 			response.getWriter().println(
 					"<td><ul>");
