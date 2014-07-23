@@ -1,5 +1,7 @@
 package com.sap.internship.alaminut;
 
+import java.util.List;
+
 /**
  * Class holding information on a Recipe.
  */
@@ -9,7 +11,7 @@ public class Recipe {
 	private String id;
     private String name;
     private String howToMake;
-    private String[] products;
+    private List<String> products;
     
     public Recipe(String id, String name, String howToMake){
     	this.setId(id);
@@ -45,11 +47,11 @@ public class Recipe {
     	this.howToMake = newHowToMake;
     }
 	
-    public String[] getProducts(){
+    public List<String> getProducts(){
     	return this.products;
     }
     
-    public void setProducs(String[] products){
+    public void setProducs(List<String> products){
     	this.products = products;
     }
     

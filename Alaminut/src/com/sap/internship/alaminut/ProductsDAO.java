@@ -86,33 +86,36 @@ public class ProductsDAO {
      * Add a product to the table.	NEW UNDER CONSTRUCTION
      */
     public ArrayList<String> addProductNEW(String[] list) throws SQLException {
-        Connection connection = dataSource.getConnection();
-        PreparedStatement pstmt;
+    	Connection connection = dataSource.getConnection();
+    	PreparedStatement pstmt;
         ArrayList<String> idS = new ArrayList<String>();
-        for(String s: list){
-        	if(haveProduct(s)){
-        	pstmt = connection.prepareStatement("SELECT PRODUCTS.ID FROM PRODUCTS WHERE PRODUCTS.NAME = ?");
-        	pstmt.setString(1, s);
-        	ResultSet rs = pstmt.executeQuery();
-        	while (rs.next()) {
-                idS.add(rs.getString("ID"));
-            }
+        		
+    	try {
+	        for(String s: list){
+	        	if(haveProduct(s)){
+		        	pstmt = connection.prepareStatement("SELECT PRODUCTS.ID FROM PRODUCTS WHERE PRODUCTS.NAME = ?");
+		        	pstmt.setString(1, s);
+		        	ResultSet rs = pstmt.executeQuery();
+		        	while (rs.next()) {
+		                idS.add(rs.getString("ID"));
+		            }
+	        	}
+	        	else {
+	 
+	                pstmt = connection
+	                        .prepareStatement("INSERT INTO PRODUCTS (ID, NAME) VALUES (?, ?)");
+	                String id=UUID.randomUUID().toString();
+	                pstmt.setString(1, id);
+	                pstmt.setString(2, s);		//direktno vliza v bazata - BADDDDDDD
+	                pstmt.executeUpdate();
+	                idS.add(id);
+	                    
+	            }
         	}
-        	else
-        		try {
-                    pstmt = connection
-                            .prepareStatement("INSERT INTO PRODUCTS (ID, NAME) VALUES (?, ?)");
-                    String id=UUID.randomUUID().toString();
-                    pstmt.setString(1, id);
-                    pstmt.setString(2, s);		//direktno vliza v bazata - BADDDDDDD
-                    pstmt.executeUpdate();
-                    idS.add(id);
-                    
-                } finally {
-                    if (connection != null) {
-                        connection.close();
-                    }
-                }
+        } finally {
+            if (connection != null) {
+                connection.close();
+            }
         }
 		return idS;
     }

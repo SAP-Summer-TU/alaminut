@@ -68,25 +68,21 @@ public class ConnProductDAO {
     /**
      * vra6ta produktite na recepta, na koqto se znae id-to.	VARIANT KOITO VRA6TA LIST
      */
-    public List<Products> getProducts(Recipe recipe) throws SQLException {
+    public List<String> getProducts(Recipe recipe) throws SQLException {
         Connection connection = dataSource.getConnection();
         String temp=null;
-        ArrayList<Products> list = new ArrayList<Products>();
+        List<String> list = new ArrayList<String>();
         try {
             PreparedStatement pstmt = connection
-                    .prepareStatement("SELECT PRODUCTS.ID, PRODUCTS.NAME "
-                    		+ "FROM PRODUCTS JOIN CONNPRODUCT ON"
-                    		+ "PRODUCTS.ID=CONNPRODUCT.PRODUCT_ID JOIN RECIPES ON"
-                    		+ "CONNPRODUCT.RECIPE_ID = ?"
-                    		+ "GROUP BY PRODUCTS.ID");
+                    .prepareStatement("SELECT PRODUCTS.NAME FROM PRODUCTS "
+                    		+ "WHERE PRODUCTS.ID IN( SELECT PRODUCT_ID "
+                    		+ "FROM CONNPRODUCT WHERE RECIPE_ID = ? )");
             pstmt.setString(1, recipe.getId());
             ResultSet rs = pstmt.executeQuery();
             
             while (rs.next()) {
-            	Products prod = new Products();
-                prod.setId(rs.getString("ID"));
-                prod.setName(rs.getString("NAME"));
-                list.add(prod);
+            	String productName = rs.getString("NAME");
+                list.add(productName);
             }
             
             return list;

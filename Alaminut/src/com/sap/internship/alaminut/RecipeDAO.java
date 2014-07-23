@@ -76,14 +76,9 @@ public class RecipeDAO {
                 r.setName(rs.getString("NAME"));
                 r.setHowToMake(rs.getString("HOWTOMAKE"));
                 
-                List<Products> recipeProduct = connProductDAO.getProducts(r);
-                List<String> productName = new ArrayList<String>();
+                List<String> recipeProduct = connProductDAO.getProducts(r);
                 
-                for (Products products : recipeProduct) {
-					productName.add(products.getName());
-				}
-                
-                r.setProducs((String[]) productName.toArray());
+                r.setProducs(recipeProduct);
                 
                 list.add(r);
             }
