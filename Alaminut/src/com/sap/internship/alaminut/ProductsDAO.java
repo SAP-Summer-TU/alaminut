@@ -39,19 +39,19 @@ public class ProductsDAO {
      * vra6ta true - ako produkta go ima v bazata
      * vra6ta false - ako produkta go nqma
      */
-    public boolean haveProduct(Products product) throws SQLException {
+    public boolean haveProduct(String product) throws SQLException {
         Connection connection = dataSource.getConnection();
-        int id=0;
+        String id = "";
         try {
             PreparedStatement pstmt = connection
                     .prepareStatement("SELECT PRODUCTS.ID FROM PRODUCTS WHERE PRODUCTS.NAME = ?");
-            pstmt.setString(1, product.getName());
+            pstmt.setString(1, product);
             ResultSet rs = pstmt.executeQuery();
             
             while (rs.next()) {
-                id=rs.getInt("ID");
+                id=rs.getString("ID");
             }
-            if(id!=0) return true;
+            if(!(id.isEmpty())) return true;
             else return false;
         } finally {
             if (connection != null) {
@@ -64,7 +64,11 @@ public class ProductsDAO {
      */
     public void addProduct(Products product) throws SQLException {
         Connection connection = dataSource.getConnection();
-
+        
+        if(haveProduct(product.getName())){
+        	return;
+        }
+        
         try {
             PreparedStatement pstmt = connection
                     .prepareStatement("INSERT INTO PRODUCTS (ID, NAME) VALUES (?, ?)");
@@ -76,6 +80,41 @@ public class ProductsDAO {
                 connection.close();
             }
         }
+    }
+    
+    /**
+     * Add a product to the table.	NEW UNDER CONSTRUCTION
+     */
+    public ArrayList<String> addProductNEW(String[] list) throws SQLException {
+        Connection connection = dataSource.getConnection();
+        PreparedStatement pstmt;
+        ArrayList<String> idS = new ArrayList<String>();
+        for(String s: list){
+        	if(haveProduct(s)){
+        	pstmt = connection.prepareStatement("SELECT PRODUCTS.ID FROM PRODUCTS WHERE PRODUCTS.NAME = ?");
+        	pstmt.setString(1, s);
+        	ResultSet rs = pstmt.executeQuery();
+        	while (rs.next()) {
+                idS.add(rs.getString("ID"));
+            }
+        	}
+        	else
+        		try {
+                    pstmt = connection
+                            .prepareStatement("INSERT INTO PRODUCTS (ID, NAME) VALUES (?, ?)");
+                    String id=UUID.randomUUID().toString();
+                    pstmt.setString(1, id);
+                    pstmt.setString(2, s);		//direktno vliza v bazata - BADDDDDDD
+                    pstmt.executeUpdate();
+                    idS.add(id);
+                    
+                } finally {
+                    if (connection != null) {
+                        connection.close();
+                    }
+                }
+        }
+		return idS;
     }
     /**
      * Check if Products table already exists and create it if not.
@@ -115,8 +154,8 @@ public class ProductsDAO {
     private void createTable(Connection connection) throws SQLException {
         PreparedStatement pstmt = connection
                 .prepareStatement("CREATE TABLE PRODUCTS "
-                        + "(ID INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, "
-                        + "NAME VARCHAR(255) UNIQUE NOT NULL,");
+                        + "(ID VARCHAR(255) PRIMARY KEY, "
+                        + "NAME VARCHAR(255) UNIQUE NOT NULL)");
         pstmt.executeUpdate();
     }
 }

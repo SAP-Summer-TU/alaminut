@@ -17,7 +17,7 @@
   </servlet>
   <servlet-mapping>
     <servlet-name>AlaminutServlet</servlet-name>
-    <url-pattern>/</url-pattern>
+    <url-pattern>/AlaminutServlet</url-pattern>
 </servlet-mapping>
   <resource-ref>
     <res-ref-name>jdbc/DefaultDB</res-ref-name>

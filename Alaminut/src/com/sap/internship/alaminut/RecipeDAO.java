@@ -48,8 +48,8 @@ public class RecipeDAO {
 
         try {
             PreparedStatement pstmt = connection
-                    .prepareStatement("INSERT INTO RECEPTI (ID, NAME, OPISANIE) VALUES (?, ?, ?)");
-            pstmt.setString(1, UUID.randomUUID().toString());
+                    .prepareStatement("INSERT INTO RECIPES (ID, NAME, HOWTOMAKE) VALUES (?, ?, ?)");
+            pstmt.setString(1, recipe.getId());
             pstmt.setString(2, recipe.getName());
             pstmt.setString(3, recipe.getHowToMake());
             pstmt.executeUpdate();
@@ -59,42 +59,33 @@ public class RecipeDAO {
             }
         }
     }
+    /**
+     * vra6ta ID na recepta, koqto e bila tarsena po ime.
+     */
     
-    /**
-     * Get specific recipe.		UNDER CONSTRUCTION!!	
-     	
-    public void getSpecificRecipe(Person person) throws SQLException {
-        Connection connection = dataSource.getConnection();
-
-        try {
-            PreparedStatement pstmt = connection
-                    .prepareStatement("INSERT INTO PERSONS (ID, FIRSTNAME, LASTNAME) VALUES (?, ?, ?)");
-            pstmt.setString(1, UUID.randomUUID().toString());
-            pstmt.setString(2, person.getFirstName());
-            pstmt.setString(3, person.getLastName());
-            pstmt.executeUpdate();
-        } finally {
-            if (connection != null) {
-                connection.close();
-            }
-        }
-    }
-    /**
-     * Get all persons from the table.
-     
-    public List<Person> selectAllPersons() throws SQLException {
+    public List<Recipe> selectAllRecipes(ConnProductDAO connProductDAO) throws SQLException {
         Connection connection = dataSource.getConnection();
         try {
             PreparedStatement pstmt = connection
-                    .prepareStatement("SELECT ID, FIRSTNAME, LASTNAME FROM PERSONS");
+                    .prepareStatement("SELECT * FROM RECIPES");
             ResultSet rs = pstmt.executeQuery();
-            ArrayList<Person> list = new ArrayList<Person>();
+            ArrayList<Recipe> list = new ArrayList<Recipe>();
             while (rs.next()) {
-                Person p = new Person();
-                p.setId(rs.getString(1));
-                p.setFirstName(rs.getString(2));
-                p.setLastName(rs.getString(3));
-                list.add(p);
+                Recipe r = new Recipe();
+                r.setId(rs.getString("ID"));
+                r.setName(rs.getString("NAME"));
+                r.setHowToMake(rs.getString("HOWTOMAKE"));
+                
+                List<Products> recipeProduct = connProductDAO.getProducts(r);
+                List<String> productName = new ArrayList<String>();
+                
+                for (Products products : recipeProduct) {
+					productName.add(products.getName());
+				}
+                
+                r.setProducs((String[]) productName.toArray());
+                
+                list.add(r);
             }
             return list;
         } finally {
@@ -102,12 +93,9 @@ public class RecipeDAO {
                 connection.close();
             }
         }
-    }	*/
+    }
     
-    /**
-     * vra6ta ID na recepta, koqto e bila tarsena po ime.
-     */
-    public int getRecipeByName(Recipe recipe) throws SQLException {
+    public int getRecipeId(Recipe recipe) throws SQLException {
         Connection connection = dataSource.getConnection();
         int id=0;
         try {
@@ -126,7 +114,30 @@ public class RecipeDAO {
             }
         }
     }
-    
+    /**
+     * vra6ta recepta, koqto e bila tarsena po id.
+     */
+    public Recipe getRecipe(String id) throws SQLException {
+        Connection connection = dataSource.getConnection();
+        Recipe r = new Recipe();
+        try {
+            PreparedStatement pstmt = connection
+                    .prepareStatement("SELECT RECIPES.NAME, RECIPES.HOWTOMAKE"
+                    		+ "FROM RECIPES WHERE RECIPES.ID = ?");
+            pstmt.setString(1, id);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                r.setId(id);
+                r.setName(rs.getString("NAME"));
+                r.setHowToMake(rs.getString("HOWTOMAKE"));
+            }
+            return r;
+        } finally {
+            if (connection != null) {
+                connection.close();
+            }
+        }
+    }
     /**
      * Check if the recipes table already exists and create it if not.
      */
@@ -164,9 +175,11 @@ public class RecipeDAO {
     private void createTable(Connection connection) throws SQLException {
         PreparedStatement pstmt = connection
                 .prepareStatement("CREATE TABLE RECIPES "
-                        + "(id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, "
-                        + "name VARCHAR(255) UNIQUE NOT NULL,"
-                        + "howtomake VARCHAR(255) NOT NULL)");		//ENGINE=InnoDB ???????
+                        + "(ID VARCHAR(255) PRIMARY KEY, "
+                        + "NAME VARCHAR(255) UNIQUE NOT NULL,"
+                        + "HOWTOMAKE VARCHAR(255) NOT NULL)");		//ENGINE=InnoDB ???????
         pstmt.executeUpdate();
     }
+
+
 }

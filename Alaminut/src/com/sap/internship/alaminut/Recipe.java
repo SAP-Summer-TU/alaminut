@@ -9,8 +9,19 @@ public class Recipe {
 	private String id;
     private String name;
     private String howToMake;
+    private String[] products;
+    
+    public Recipe(String id, String name, String howToMake){
+    	this.setId(id);
+    	this.setName(name);
+    	this.setHowToMake(howToMake);
+    }
+    
+    public Recipe() {
+		// TODO Auto-generated constructor stub
+	}
 
-    public String getId() {
+	public String getId() {
         return id;
     }
 
@@ -34,4 +45,12 @@ public class Recipe {
     	this.howToMake = newHowToMake;
     }
 	
+    public String[] getProducts(){
+    	return this.products;
+    }
+    
+    public void setProducs(String[] products){
+    	this.products = products;
+    }
+    
 }
