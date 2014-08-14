@@ -1,8 +1,10 @@
 package com.sap.internship.alaminut;
 
 import java.io.IOException;
+import java.sql.ParameterMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
@@ -36,6 +38,11 @@ public class AlaminutServlet extends HttpServlet {
 	private RecipeDAO recipeDAO;
 	private ConnProductDAO connProductDAO;
 	
+	private String[] products = new String[100];
+	ArrayList<String> productsList = new ArrayList<String>();
+	String productsString;
+	
+	
 
 	/** {@inheritDoc} */
 	@Override
@@ -57,13 +64,39 @@ public class AlaminutServlet extends HttpServlet {
 
 	/** {@inheritDoc} */
 	@Override
+	//
+//1	//Search page:	
 	protected void doGet(HttpServletRequest request,
+			HttpServletResponse response) throws ServletException, IOException {
+		request.setCharacterEncoding("windows-1251");
+        response.setContentType("text/html; charset=windows-1251");
+        //addBeginingHtml(response);
+		try {
+			request.getRequestDispatcher("/index.html").include(request, response);
+			//appendRecipeTable(response);
+			
+		
+		}catch (Exception e) {
+			response.getWriter().println(
+					"Persistence operation failed with reason: "
+							+ e.getMessage());
+			LOGGER.error("Persistence operation failed", e);
+		}
+		//addEndingHtml(response);
+	}
+	
+	//
+	//Result page:
+	protected void doGet1(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
 		addBeginingHtml(response);
 		
 		try {
-			response.getWriter().println("<p>Persistence with JDBC!</p>");
-			response.getWriter().println(request.getRequestURI());
+			
+			//response.getWriter().println(productsString);
+			//response.getWriter().println("<p>Persistence with JDBC!</p>");
+			//response.getWriter().println(request.getRequestURI());
+			//searchResult(response);
 			appendRecipeTable(response);
 			//appendAddForm(response);
 		} catch(SQLException sql){
@@ -76,19 +109,51 @@ public class AlaminutServlet extends HttpServlet {
 		}
 		addEndingHtml(response);
 	}
+	
+	protected void doGet2(HttpServletRequest request,
+			HttpServletResponse response) throws ServletException, IOException {
+		//addBeginingHtml(response);
+		
+		try {
+			
+			//response.getWriter().println(productsString);
+			//response.getWriter().println("<p>Persistence with JDBC!</p>");
+			//response.getWriter().println(request.getRequestURI());
+			searchResult(response, request);
+			//appendRecipeTable(response);
+			//appendAddForm(response);
+		} catch(SQLException sql){
+			response.getWriter().println("SQL Exception: " + sql);
+		}catch (Exception e) {
+			response.getWriter().println(
+					"Persistence operation failed with reason: "
+							+ e.getMessage());
+			LOGGER.error("Persistence operation failed", e);
+		}
+		//addEndingHtml(response);
+	}
+
 
 	/** {@inheritDoc} */
 	@Override
 	protected void doPost(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
+		request.setCharacterEncoding("windows-1251");
+        response.setContentType("text/html; charset=windows-1251");
 		try {
 			//doAdd(request);
 			//doGet(request, response);
+
+			String actionParam = request.getParameter("action");
 			
-			
-			doAddRecipe(request);
-			doGet(request, response);
-			
+			if ("add".equalsIgnoreCase(actionParam)) {
+				doAddRecipe(request);
+				doGet1(request, response);
+			} else if("search".equalsIgnoreCase(actionParam)){
+				//searchResult(response, request);
+				//request.
+				doGet2(request, response);
+			}
 		} catch (Throwable e) {
 			response.getWriter().println(
 					"Persistence operation failed in post with reason: "
@@ -98,16 +163,21 @@ public class AlaminutServlet extends HttpServlet {
 	}
 	
 	private void doAddRecipe(HttpServletRequest request) throws SQLException{
+		 
+		
 		Map<String, String[]> parameterMap = request.getParameterMap();
 		
 		String recipeId = UUID.randomUUID().toString();
 		String[] recipeName = parameterMap.get("recipe-name");
 		String[] recipeHowToMake = parameterMap.get("recipe-howtomake");
-		
-		Recipe recipe = new Recipe(recipeId, recipeName[0], recipeHowToMake[0]);
+		String[] recipePicture = parameterMap.get("recipe-pic");
+		Recipe recipe = new Recipe(recipeId, recipeName[0], recipeHowToMake[0], recipePicture[0]);
 		
 		recipeDAO.addRecipe(recipe);
 		ArrayList<String> addProductNEW = productsDAO.addProductNEW(parameterMap.get("product"));
+//2		//
+		
+		//
 		
 		for (String product_id : addProductNEW) {
 			connProductDAO.insertConnection(recipeId, product_id);
@@ -164,6 +234,132 @@ public class AlaminutServlet extends HttpServlet {
 			throws SQLException, IOException {
 		// Append table that lists all persons
 		List<Recipe> resultList = recipeDAO.selectAllRecipes(connProductDAO);
+		
+		response.getWriter().println(
+				"<p><table border=\"1\"><tr><th colspan=\"3\">"
+						+ (resultList.isEmpty() ? "" : resultList.size() + " ")
+						+ "Entries in the Database</th></tr>");
+		if (resultList.isEmpty()) {
+			response.getWriter().println(
+					"<tr><td colspan=\"3\">Database is empty</td></tr>");
+		} else {
+			response.getWriter()
+					.println(
+							"<tr><th>Name</th><th>How to make</th><th>Picture sorce</th></tr>");
+		}
+		IXSSEncoder xssEncoder = XSSEncoder.getInstance();
+		for (Recipe r : resultList) {
+			response.getWriter().println(
+					"<tr><td>" + r.getName()
+							+ "</td><td>"
+							+ r.getHowToMake()
+							+ "</td><td><img src=\"" + r.getPicture() + "\" width=\"100\" height=\"100\"></td>");
+			response.getWriter().println(
+					"<td><ul>");
+			for(String prod: r.getProducts()){
+				response.getWriter().println("<li>" + prod + "</li>");
+			}
+			response.getWriter().println("</ul></td></tr>");
+		}
+		response.getWriter().println("</table></p>");
+	}
+	private void searchResult(HttpServletResponse response, HttpServletRequest request)throws Exception{
+		
+		String[] products = request.getParameterValues("product");
+		
+		List<Recipe> resultList = connProductDAO.getSpecificRecipe(Arrays.asList(products));
+		addBeginingHtml(response);
+		
+		if (resultList.isEmpty()) {
+			response.getWriter().println("<div id=\"result-container\">"
+									+ "<h1 id=\"result-header\">Резултати:</h1>"
+									+ "<div id=\"srecipe-container\">");
+			response.getWriter().println("<div class=\"small-recipe\">"
+				+ "<h5></h5>"
+				+ "<p>There is no such recipe</p>"
+				+ "<ul>");
+			response.getWriter().println("</ul>"
+									+ "</div>");
+			response.getWriter().println("</div>"
+										+ "</div>");
+		} else {
+			addBoddyHtml(response, resultList);
+		}
+		
+		addEndingHtml(response);
+	}
+	private void addBeginingHtml(HttpServletResponse response) throws IOException {
+		response.getWriter()
+			.println("<!DOCTYPE html>"
+					+ "<html>"
+					+ "<head>"
+					+ "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=windows-1251\">"
+					+ "<title>Резултати</title>"
+					+ "<link rel=\"stylesheet\" type=\"text/css\" href=\"normalize.css\">"
+					+ "<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
+					+ "</head>"
+					+ "<body>");
+	}
+	
+	private void addBoddyHtml(HttpServletResponse response,List<Recipe> resultList) throws IOException {
+		IXSSEncoder xssEncoder = XSSEncoder.getInstance();
+		response.getWriter().println("<div id=\"result-container\">"
+									+ "<h1 id=\"result-header\">Резултати:</h1>"
+									+ "<div id=\"srecipe-container\">");
+		for(Recipe r: resultList){
+			response.getWriter().println("<div class=\"small-recipe\">"
+										+ "<img src=" + r.getPicture() + ">"
+										+ "<h5>" +  r.getName() + "</h5>"
+										+ "<p>" + r.getHowToMake() + "</p>"
+										+ "<ul>");
+			for(String prod: r.getProducts()){
+				response.getWriter().println("<li>" + prod + "</li>");
+			}
+			response.getWriter().println("</ul>"
+										+ "</div>");
+		}
+		response.getWriter().println("</div>"
+									+ "<div id=\"big-recipe\">"
+									+ "<img src=\"#\">"
+									+ "<h2></h2>"
+									+ "<p></p>"
+									+ "<ul></ul>"
+									+ "</div>"
+									+ "</div>");
+		
+	}
+	
+	private void addEndingHtml(HttpServletResponse response) throws IOException {
+		response.getWriter()
+			.println("<script type=\"text/javascript\" src=\"scripts/jquery-1.11.1.min.js\"></script>"
+					+ "<script type=\"text/javascript\" src=\"scripts/results.js\"></script>"
+					+ "</body></html>");
+	}
+	
+	private void addScriptsHtml(HttpServletResponse response) throws IOException {
+		response.getWriter()
+			.println("<script type=\"text/javascript\" src=\"./scripts/jquery-1.11.1.min.js\"></script>"
+					+ "<script type=\"text/javascript\" src=\"./scripts/functions.js\"></script>");
+	}
+}
+
+
+
+//searchResult Backup
+/*
+private void searchResult(HttpServletResponse response, HttpServletRequest request)throws Exception{
+		//Map<String, String[]> parameterMap = request.getParameterMap();
+		String[] products = request.getParameterValues("product");
+		//for(String s: products){
+		//	productsList.add(s);
+		//	response.getWriter().println(s);
+		//}
+		//String productsString = ConnProductDAO.listToString();
+		//response.getWriter().println(productsString);
+		
+		List<Recipe> resultList = connProductDAO.getSpecificRecipe(Arrays.asList(products));
+		//addBeginingHtml(response);
+		//
 		response.getWriter().println(
 				"<p><table border=\"1\"><tr><th colspan=\"3\">"
 						+ (resultList.isEmpty() ? "" : resultList.size() + " ")
@@ -191,22 +387,7 @@ public class AlaminutServlet extends HttpServlet {
 			response.getWriter().println("</ul></td></tr>");
 		}
 		response.getWriter().println("</table></p>");
+		//
+		//addEndingHtml(response);
 	}
-	
-	private void addBeginingHtml(HttpServletResponse response) throws IOException {
-		response.getWriter()
-			.println("<!DOCTYPE html><html><head><title>"
-					+ "</title></head><body>");
-	}
-	
-	private void addEndingHtml(HttpServletResponse response) throws IOException {
-		response.getWriter()
-			.println("</body></html>");
-	}
-	
-	private void addScriptsHtml(HttpServletResponse response) throws IOException {
-		response.getWriter()
-			.println("<script type=\"text/javascript\" src=\"./scripts/jquery-1.11.1.min.js\"></script>"
-					+ "<script type=\"text/javascript\" src=\"./scripts/functions.js\"></script>");
-	}
-}
+*/

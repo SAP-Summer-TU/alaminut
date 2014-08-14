@@ -95,24 +95,35 @@ public class ConnProductDAO {
     /**
      * Get specific recipe.	
      */	
-    public List<Recipe> getSpecificRecipe(String products) throws SQLException {	//trqbva da polu4i String ot produkti
+    public List<Recipe> getSpecificRecipe(List<String> prodList) throws SQLException {	//trqbva da polu4i String ot produkti
         Connection connection = dataSource.getConnection();
+        
+        String sqlQuery = "SELECT RECIPES.ID, RECIPES.NAME, RECIPES.HOWTOMAKE, RECIPES.PICTURE " //**
+        		+ "FROM RECIPES "
+        		+ "WHERE RECIPES.ID IN ("
+        		+ "SELECT RECIPE_ID FROM CONNPRODUCT "
+        		+ "WHERE PRODUCT_ID IN ("
+        		+ "SELECT PRODUCTS.ID FROM PRODUCTS "
+        		+ "WHERE PRODUCTS.NAME IN (?)"
+        		+ "))";
+        
+        sqlQuery = editParams(sqlQuery, prodList.size());
+        
         try {
             PreparedStatement pstmt = connection
-                    .prepareStatement("SELECT RECIPES.ID, RECIPES.NAME, RECIPES.HOWTOMAKE "
-                    		+ "FROM RECIPES JOIN CONNPRODUCT ON"
-                    		+ "RECIPES.ID=CONNPRODUCT.RECIPE_ID JOIN PRODUCTS ON "
-                    		+ "CONNPRODUCTS.PRODUCT_ID=PRODUCTS.ID"
-                    		+ "WHERE PRODUCTS.NAME IN (?)"
-                    		+ "GROUP BY RECIPES.ID;");
-            pstmt.setString(1, products);
+                    .prepareStatement(sqlQuery);
+            int count = 1;
+            for (String string : prodList) {
+            	pstmt.setString(count, string);
+            	count++;
+			}
+            
             ResultSet rs = pstmt.executeQuery();
             ArrayList<Recipe> list = new ArrayList<Recipe>();
             while (rs.next()) {
-                Recipe r = new Recipe();
-                r.setId(rs.getString("ID"));
-                r.setName(rs.getString("NAME"));
-                r.setHowToMake(rs.getString("HOWTOMAKE"));
+                Recipe r = new Recipe(rs.getString("ID"), 
+                		rs.getString("NAME"), rs.getString("HOWTOMAKE"), rs.getString("PICTURE")) ;	//**
+                r.setProducs(this.getProducts(r));
                 list.add(r);
             }
             return list;
@@ -123,7 +134,19 @@ public class ConnProductDAO {
         }
     }
     
-    public void insertConnection(String recipe_id, String product_id) throws SQLException{
+    private String editParams(String sqlQuery, int size) {
+		StringBuilder sb = new StringBuilder(sqlQuery);
+		
+		int indexOfParam = sb.indexOf("?");
+		
+		for (int i = 0; i < size - 1; i++) {
+			sb.insert(indexOfParam + 1, ", ?");
+		}
+		
+		return sb.toString();
+	}
+
+	public void insertConnection(String recipe_id, String product_id) throws SQLException{
     	Connection connection = dataSource.getConnection();
 
         try {
@@ -179,21 +202,34 @@ public class ConnProductDAO {
         PreparedStatement pstmt = connection
                 .prepareStatement("CREATE TABLE CONNPRODUCT "
                         + "(RECIPE_ID VARCHAR(255), "
-                        + "PRODUCT_ID VARCHAR(255), "
-                        + "FOREIGN KEY (RECIPE_ID) REFERENCES RECIPES(ID),"
-                        + "FOREIGN KEY (PRODUCT_ID) REFERENCES PRODUCTS(ID))");
+                        + "PRODUCT_ID VARCHAR(255))");
         pstmt.executeUpdate();
     }
     /**
      * zapisva elementite na masiv v String.
      */
-    public static String listToString(ArrayList<String> list){
+    /*public static String listToString(ArrayList<String> list){
 		String listString = "";
 
 		for (String s : list)
 		{
 		    listString += s + "\n";	//separator
 		}
+		return listString;
+	}*/
+    
+    
+    public static String listToString(List<String> list){
+		String listString = "";
+
+		for (String s : list)
+		{
+			if (s.length() > 0)
+			    listString += "'" + s + "',";	//separator
+		}
+		if (listString.length() > 0) {
+			listString = listString.substring(1, listString.length()-2);
+		  }
 		return listString;
 	}
 }

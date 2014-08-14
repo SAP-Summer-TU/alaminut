@@ -48,10 +48,11 @@ public class RecipeDAO {
 
         try {
             PreparedStatement pstmt = connection
-                    .prepareStatement("INSERT INTO RECIPES (ID, NAME, HOWTOMAKE) VALUES (?, ?, ?)");
+                    .prepareStatement("INSERT INTO RECIPES (ID, NAME, HOWTOMAKE, PICTURE) VALUES (?, ?, ?, ?)"); //**
             pstmt.setString(1, recipe.getId());
             pstmt.setString(2, recipe.getName());
             pstmt.setString(3, recipe.getHowToMake());
+            pstmt.setString(4, recipe.getPicture());	//**
             pstmt.executeUpdate();
         } finally {
             if (connection != null) {
@@ -75,6 +76,7 @@ public class RecipeDAO {
                 r.setId(rs.getString("ID"));
                 r.setName(rs.getString("NAME"));
                 r.setHowToMake(rs.getString("HOWTOMAKE"));
+                r.setPicture(rs.getString("PICTURE"));	//**
                 
                 List<String> recipeProduct = connProductDAO.getProducts(r);
                 
@@ -117,7 +119,7 @@ public class RecipeDAO {
         Recipe r = new Recipe();
         try {
             PreparedStatement pstmt = connection
-                    .prepareStatement("SELECT RECIPES.NAME, RECIPES.HOWTOMAKE"
+                    .prepareStatement("SELECT RECIPES.NAME, RECIPES.HOWTOMAKE, RECIPES.PICTURE"  //**
                     		+ "FROM RECIPES WHERE RECIPES.ID = ?");
             pstmt.setString(1, id);
             ResultSet rs = pstmt.executeQuery();
@@ -125,6 +127,7 @@ public class RecipeDAO {
                 r.setId(id);
                 r.setName(rs.getString("NAME"));
                 r.setHowToMake(rs.getString("HOWTOMAKE"));
+                r.setHowToMake(rs.getString("PICTURE"));  //**
             }
             return r;
         } finally {
@@ -138,10 +141,21 @@ public class RecipeDAO {
      */
     private void checkTable() throws SQLException {
         Connection connection = null;
-
+        
         try {
             connection = dataSource.getConnection();
-            if (!existsTable(connection)) {
+            /*PreparedStatement pstmt = connection
+                    .prepareStatement("DROP TABLE CONNPRODUCT");	//**
+            pstmt.executeUpdate();
+            PreparedStatement pstmt = connection
+                    .prepareStatement("DROP TABLE PRODUCTS");	//**
+            pstmt.executeUpdate();
+            pstmt = connection
+                    .prepareStatement("DROP TABLE RECIPES");	//**
+            pstmt.executeUpdate();*/
+            
+            
+           if (!existsTable(connection)) {
                 createTable(connection);
             }
         } finally {
@@ -154,7 +168,8 @@ public class RecipeDAO {
      * Check if the recipes table already exists.
      */
     private boolean existsTable(Connection conn) throws SQLException {
-        DatabaseMetaData meta = conn.getMetaData();
+    	
+    	DatabaseMetaData meta = conn.getMetaData();
         ResultSet rs = meta.getTables(null, null, "RECIPES", null);
         while (rs.next()) {
             String name = rs.getString("TABLE_NAME");
@@ -167,14 +182,17 @@ public class RecipeDAO {
     /**
      * Create the recipes table.
      */
+    
     private void createTable(Connection connection) throws SQLException {
-        PreparedStatement pstmt = connection
+    	
+    	PreparedStatement pstmt = connection
                 .prepareStatement("CREATE TABLE RECIPES "
                         + "(ID VARCHAR(255) PRIMARY KEY, "
                         + "NAME VARCHAR(255) UNIQUE NOT NULL,"
-                        + "HOWTOMAKE VARCHAR(255) NOT NULL)");		//ENGINE=InnoDB ???????
+                        + "HOWTOMAKE VARCHAR(2500) NOT NULL,"
+                        + "PICTURE VARCHAR(255))");	//**
         pstmt.executeUpdate();
     }
-
+    
 
 }
