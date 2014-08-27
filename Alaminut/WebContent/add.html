@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=windows-1251">
+	<title>Р”РѕР±Р°РІРё</title>
+	<link rel="stylesheet" type="text/css" href="normalize.css">
+	<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+	<div id="form-container">
+		<form id="product-form" action="AlaminutServlet" method="post">
+			<img id="logo" src="images/logo.png" width="300">
+			<h3 class="green">Добавяне на рецепта</h3>
+			<label for="recipe-name">Име:</label><input type="text" name="recipe-name">
+			<label for="recipe-pic">Снимка</label><input type="text" name="recipe-pic">
+			<label for="recipe-howtomake">Рецепта:</label><textarea name="recipe-howtomake"></textarea>
+			<h3>Продукти</h3>
+			<input type="text" class="product-input" name="product" id="product-1"><button id="add-button">+</button>
+			<input type="hidden" value="add" name="action" >
+			<input id="submit-button" type="submit" value="Добави">
+		</form>
+	</div>
+
+	<script type="text/javascript" src="scripts/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="scripts/functions.js"></script>
+</body>
+</html>

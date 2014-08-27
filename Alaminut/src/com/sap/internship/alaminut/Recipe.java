@@ -11,12 +11,14 @@ public class Recipe {
 	private String id;
     private String name;
     private String howToMake;
+    private String picture;	//**
     private List<String> products;
     
-    public Recipe(String id, String name, String howToMake){
+    public Recipe(String id, String name, String howToMake, String picture){	//**
     	this.setId(id);
     	this.setName(name);
     	this.setHowToMake(howToMake);
+    	this.setPicture(picture);	//**
     }
     
     public Recipe() {
@@ -53,6 +55,13 @@ public class Recipe {
     
     public void setProducs(List<String> products){
     	this.products = products;
+    }
+    public String getPicture(){						//**
+    	return this.picture;						//
+    }												//
+    												//
+    public void setPicture(String newPicture){		//
+    	this.picture = newPicture;					//**
     }
     
 }

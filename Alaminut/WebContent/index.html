@@ -1,18 +1,23 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Search</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=windows-1251">
+	<title>Търси</title>
+	<link rel="stylesheet" type="text/css" href="normalize.css">
+	<link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-	<div id="form-container" style="width: 270px; border:1px solid black;">
+	<div id="form-container">
+		<img id="logo" src="images/logo.png" width="300">
+		<p class="green">Добре дошли</p>
+		<h3 class="green">Разполагам със:</h3>
 		<form id="product-form" action="AlaminutServlet" method="post">
-			<label for="recipe-name">Name</label><input type="text" name="recipe-name">
-			<label for="recipe-howtomake">How to make it</label><textarea name="recipe-howtomake" rows="15" cols="35"></textarea>
-			<h3>Products:</h3>
-			<input type="text" name="product" id="product-1"><button id="add-button">+</button>
-			<input type="hidden" value="add" name="action" >
-			<input id="submit-button" type="submit" value="Add">
+			<div class="input-container"><input type="text" name="product" class="product-input" id="product-1"></div>
+			<input type="hidden" name="action" value="search">
+			<button id="add-button">+</button>
+			<input id="submit-button" type="submit" value="Намери рецепта">
 		</form>
+		<a href="add.html"><button id="link-to-add">Добави рецепта</button></a>
 	</div>
 
 	<script type="text/javascript" src="scripts/jquery-1.11.1.min.js"></script>
